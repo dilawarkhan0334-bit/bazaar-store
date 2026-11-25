@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bazaar Online Store</title>
+<meta name="description" content="Online store with Cash on Delivery across Pakistan">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F5F1;--ink:#14211C;--muted:#5B6B63;--green:#0F4D3A;--gold:#F2A900;--card:#fff;--line:#D9E1DB;
+--head:'Bricolage Grotesque',system-ui,sans-serif;--body:'Figtree',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{position:sticky;top:0;z-index:5;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 5vw}
+.logo{font:800 1.4rem var(--head);letter-spacing:-.02em}
+.cartbtn{background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:9px 18px;font-weight:600;cursor:pointer}
+.hero{padding:9vh 5vw 6vh;max-width:1100px;margin:auto}
+.hero h1{font:800 clamp(2.4rem,7vw,4.8rem)/1 var(--head);letter-spacing:-.035em;max-width:14ch}
+.hero p{margin-top:18px;color:var(--muted);max-width:46ch;font-size:1.1rem}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:0 5vw 20px;max-width:1100px;margin:auto}
+.chip{border:1.5px solid var(--green);background:transparent;border-radius:999px;padding:7px 16px;cursor:pointer;font-weight:600;color:var(--green)}
+.chip[aria-pressed=true]{background:var(--green);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px;padding:0 5vw 60px;max-width:1100px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.pic{aspect-ratio:4/3;display:grid;place-items:center;font-size:3.4rem}
+.info{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1}
+.info h3{font:700 1.05rem var(--head)}
+.cat{color:var(--muted);font-size:.85rem}
+.price{font-weight:600;margin-top:auto;padding-top:8px}
+.add{margin-top:10px;background:var(--green);color:#fff;border:0;border-radius:8px;padding:10px;font-weight:600;cursor:pointer}
+.add:hover{background:#0b3a2b}
+.overlay{position:fixed;inset:0;background:rgba(20,33,28,.5);display:none;z-index:9}
+.overlay.on{display:block}
+aside{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:#fff;z-index:10;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column}
+aside.on{transform:none}
+.ahead{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.ahead h2{font:700 1.2rem var(--head)}
+.x{background:none;border:0;font-size:1.6rem;cursor:pointer}
+.items{flex:1;overflow:auto;padding:8px 20px}
+.row{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.row .t{display:grid;place-items:center;height:44px;border-radius:8px;font-size:1.5rem}
+.qty{display:flex;align-items:center;gap:8px;margin-top:4px}
+.qty button{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer}
+.empty{color:var(--muted);padding:30px 0;text-align:center}
+.foot{padding:16px 20px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.total{display:flex;justify-content:space-between;font-weight:700;font-size:1.1rem}
+.foot input,.foot select,.foot textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.order{background:var(--gold);color:var(--ink);border:0;border-radius:8px;padding:13px;font-weight:700;cursor:pointer}
+.err{color:#B3261E;font-size:.85rem;min-height:1.1em}
+footer{background:var(--ink);color:#C9D4CD;padding:30px 5vw;text-align:center;font-size:.9rem}
+@media(prefers-reduced-motion:reduce){aside{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" id="logo"></div>
+  <button class="cartbtn" id="openCart" aria-label="Open cart">Cart (<span id="count">0</span>)</button>
+</header>
+
+<section class="hero">
+  <h1>Ghar tak delivery, poore Pakistan mein.</h1>
+  <p>Pasand karein, cart mein daalein, aur Cash on Delivery se order karein. Payment sirf item milne par.</p>
+</section>
+
+<div class="filters" id="filters" role="group" aria-label="Categories"></div>
+<main class="grid" id="grid"></main>
+
+<div class="overlay" id="overlay"></div>
+<aside id="cart" aria-label="Shopping cart">
+  <div class="ahead"><h2>Aap ka cart</h2><button class="x" id="closeCart" aria-label="Close cart">&times;</button></div>
+  <div class="items" id="items"></div>
+  <form class="foot" id="form" novalidate>
+    <div class="total"><span>Total</span><span id="total">Rs 0</span></div>
+    <input name="name" placeholder="Poora naam" autocomplete="name">
+    <input name="phone" placeholder="Phone (03xx xxxxxxx)" inputmode="tel" autocomplete="tel">
+    <input name="city" placeholder="Shehar" autocomplete="address-level2">
+    <textarea name="addr" rows="2" placeholder="Mukammal address" autocomplete="street-address"></textarea>
+    <select name="pay">
+      <option>Cash on Delivery</option>
+      <option>JazzCash / Easypaisa</option>
+      <option>Bank Transfer</option>
+    </select>
+    <div class="err" id="err" role="alert"></div>
+    <button class="order" type="submit">Order WhatsApp par bhejein</button>
+  </form>
+</aside>
+
+<footer id="foot"></footer>
+
+<script>
+/* ====== YAHAN APNI DETAILS BADLEIN ====== */
+const STORE = {
+  name: "Bazaar",
+  whatsapp: "923001234567",   // country code ke saath, bagair + ya 0 ke
+  delivery: 250,              // delivery charges (Rs). Free chahiye to 0 likhein
+  freeAbove: 5000             // is amount se oopar delivery free
+};
+const PRODUCTS = [
+  {id:1,name:"Cotton Kurta",cat:"Kapray",price:2499,icon:"👕",bg:"#F6D7A7"},
+  {id:2,name:"Lawn Dupatta",cat:"Kapray",price:1299,icon:"🧣",bg:"#E5C1D9"},
+  {id:3,name:"Wireless Earbuds",cat:"Electronics",price:3999,icon:"🎧",bg:"#BFD7EA"},
+  {id:4,name:"Power Bank 10000mAh",cat:"Electronics",price:2799,icon:"🔋",bg:"#C9E4C5"},
+  {id:5,name:"Leather Wallet",cat:"Accessories",price:1499,icon:"👛",bg:"#E8CDB5"},
+  {id:6,name:"Sunglasses",cat:"Accessories",price:1899,icon:"🕶️",bg:"#D3D0E8"},
+  {id:7,name:"Steel Water Bottle",cat:"Ghar",price:1199,icon:"🧴",bg:"#BEE3DB"},
+  {id:8,name:"Scented Candle",cat:"Ghar",price:899,icon:"🕯️",bg:"#F5E1A4"}
+];
+/* ========================================= */
+
+const $ = s => document.querySelector(s);
+const rs = n => "Rs " + n.toLocaleString("en-PK");
+let cart = {}, filter = "Sab";
+try { cart = JSON.parse(localStorage.getItem("cart") || "{}"); } catch(e) {}
+const save = () => { try { localStorage.setItem("cart", JSON.stringify(cart)); } catch(e) {} };
+
+$("#logo").textContent = STORE.name;
+document.title = STORE.name + " Online Store";
+$("#foot").textContent = "© " + new Date().getFullYear() + " " + STORE.name + ". Cash on Delivery poore Pakistan mein.";
+
+function renderFilters(){
+  const cats = ["Sab", ...new Set(PRODUCTS.map(p => p.cat))];
+  $("#filters").innerHTML = cats.map(c =>
+    `<button class="chip" aria-pressed="${c===filter}" data-c="${c}">${c}</button>`).join("");
+}
+function renderGrid(){
+  $("#grid").innerHTML = PRODUCTS.filter(p => filter==="Sab" || p.cat===filter).map(p => `
+    <article class="card">
+      <div class="pic" style="background:${p.bg}" aria-hidden="true">${p.icon}</div>
+      <div class="info"><h3>${p.name}</h3><span class="cat">${p.cat}</span>
+      <span class="price">${rs(p.price)}</span>
+      <button class="add" data-id="${p.id}">Cart mein daalein</button></div>
+    </article>`).join("");
+}
+function subtotal(){ return Object.entries(cart).reduce((s,[id,q]) => s + PRODUCTS.find(p=>p.id==id).price*q, 0); }
+function shipping(){ const s = subtotal(); return s===0 || s>=STORE.freeAbove ? 0 : STORE.delivery; }
+function renderCart(){
+  const ids = Object.keys(cart);
+  $("#count").textContent = Object.values(cart).reduce((a,b)=>a+b,0);
+  $("#items").innerHTML = ids.length ? ids.map(id => {
+    const p = PRODUCTS.find(x => x.id==id), q = cart[id];
+    return `<div class="row"><div class="t" style="background:${p.bg}">${p.icon}</div>
+      <div><strong>${p.name}</strong><div class="qty">
+        <button data-d="-1" data-id="${id}" aria-label="Kam karein">−</button><span>${q}</span>
+        <button data-d="1" data-id="${id}" aria-label="Zyada karein">+</button></div></div>
+      <div>${rs(p.price*q)}</div></div>`;
+  }).join("") + `<div class="row" style="grid-template-columns:1fr auto;color:var(--muted)">
+      <span>Delivery${shipping()===0?" (free)":""}</span><span>${rs(shipping())}</span></div>`
+    : `<p class="empty">Cart khali hai. Koi product chunein.</p>`;
+  $("#total").textContent = rs(subtotal() + shipping());
+  save();
+}
+function toggle(on){ $("#cart").classList.toggle("on",on); $("#overlay").classList.toggle("on",on); }
+
+$("#filters").onclick = e => { const c = e.target.dataset.c; if(c){ filter=c; renderFilters(); renderGrid(); } };
+$("#grid").onclick = e => { const id = e.target.dataset.id; if(id){ cart[id]=(cart[id]||0)+1; renderCart(); toggle(true); } };
+$("#items").onclick = e => {
+  const id = e.target.dataset.id, d = +e.target.dataset.d;
+  if(id && d){ cart[id]+=d; if(cart[id]<=0) delete cart[id]; renderCart(); }
+};
+$("#openCart").onclick = () => toggle(true);
+$("#closeCart").onclick = $("#overlay").onclick = () => toggle(false);
+document.addEventListener("keydown", e => { if(e.key==="Escape") toggle(false); });
+
+$("#form").onsubmit = e => {
+  e.preventDefault();
+  const f = new FormData(e.target), err = $("#err");
+  const v = k => (f.get(k)||"").trim();
+  if(!Object.keys(cart).length){ err.textContent = "Pehle cart mein koi product daalein."; return; }
+  if(!v("name") || !v("city") || !v("addr")){ err.textContent = "Naam, shehar aur address likhna zaroori hai."; return; }
+  if(!/^(\+?92|0)?3\d{9}$/.test(v("phone").replace(/[\s-]/g,""))){ err.textContent = "Sahi phone number likhein, jaise 0300 1234567."; return; }
+  err.textContent = "";
+  const lines = Object.entries(cart).map(([id,q]) => { const p = PRODUCTS.find(x=>x.id==id); return `• ${p.name} x${q} = ${rs(p.price*q)}`; });
+  const msg = `Naya order (${STORE.name})\n\n${lines.join("\n")}\n\nDelivery: ${rs(shipping())}\nTotal: ${rs(subtotal()+shipping())}\nPayment: ${v("pay")}\n\nNaam: ${v("name")}\nPhone: ${v("phone")}\nShehar: ${v("city")}\nAddress: ${v("addr")}`;
+  window.open("https://wa.me/" + STORE.whatsapp + "?text=" + encodeURIComponent(msg), "_blank");
+  cart = {}; renderCart(); e.target.reset(); toggle(false);
+};
+
+renderFilters(); renderGrid(); renderCart();
+</script>
+</body>
+</html>
